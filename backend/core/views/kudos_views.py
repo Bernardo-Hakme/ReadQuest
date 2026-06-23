@@ -12,3 +12,5 @@ class KudosViewSet(viewsets.ModelViewSet):
 # TODO avoid user to like multiple times
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+# TODO rewrite it to function decorator style (like review/session_views.py)
