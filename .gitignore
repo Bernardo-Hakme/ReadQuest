@@ -11,3 +11,6 @@ backend/.env
 
 .DS_Store
 Thumbs.db
+
+# Ignore user-uploaded testing media
+backend/media/
