@@ -1,3 +1,5 @@
+from django.utils import timezone
+from datetime import timedelta
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -20,7 +22,29 @@ def reading_session_list(request):
         serializer = serializers.ReadingSessionSerializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.save(user=request.user)
+            now = timezone.now()
+            
+            last_session = models.ReadingSession.objects.filter(author=request.user).order_by('-created_at').first()
+            
+            user_profile = request.user
+
+            if last_session:
+                time_since_last_session = now - last_session.created_at
+
+                if time_since_last_session < timedelta(hours=24):
+                    user_profile.current_streak += 1
+                else:
+                    user_profile = 1
+            else:
+                user_profile.streak = 1
+
+            if user_profile.current_streak > user_profile.highest_streak:
+                user_profile.highest_streak = user_profile.current_streak
+
+            user_profile.save()
+
+            serializer.save(user=request.user)            
+            
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
