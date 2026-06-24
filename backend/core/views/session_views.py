@@ -25,4 +25,38 @@ def reading_session_list(request):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-# TODO reading session detail (put, delete)
+@api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def reading_session_detail(request, primary_key):
+    try:
+        # get the id of a reading session row
+        session = models.ReadingSession.objects.get(pk=primary_key)
+    except models.ReadingSession.DoesNotExist:
+        return Response({"detail": "Reading log not found"}, status=status.HTTP_404_NOT_FOUND)
+    else:
+        # User wants to see a specific Session
+        if request.method == 'GET':
+            serializer = serializers.ReadingSessionSerializer(session)
+            return Response(serializer.data)
+        
+        #User wants to edit a specific Session
+        if request.method == 'PUT':
+            # if user is not owner of the posted session
+            if session.user != request.user:
+                return Response({"detail": "You do not have permission to edit this log"}, status=status.HTTP_403_FORBIDDEN)
+            
+            serializer = serializers.ReadingSessionSerializer(session, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        # User wants to delete a session
+        if request.method == 'DELETE':
+            # check if user is owner of post
+            if session.user != request.user:
+                return Response({"detail": "You do not have permission to delete this log"}, status=status.HTTP_403_FORBIDDEN)
+
+            session.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
