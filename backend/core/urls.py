@@ -1,4 +1,4 @@
-from django.utils import path
+from django.urls import path
 from rest_framework.authtoken.views import obtain_auth_token
 from .views import auth_views, profile_views, review_views, kudos_views, session_views
 
